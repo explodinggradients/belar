@@ -13,6 +13,13 @@ format: ## Running code formatter: black and isort
 	@find src -name "*.pyi" ! -name "*_pb2*" -exec black --pyi --config pyproject.toml {} \;
 	@echo "(ruff) Running fix only..."
 	@ruff check src docs tests --fix-only
+format-check:
+	@echo "(isort) Checking import order..."
+	@isort --check .
+	@echo "(black) Checking code formatting..."
+	@black --config pyproject.toml --check src tests docs
+	@echo "(ruff) Linting development project..."
+	@ruff check src docs tests --fix-only
 lint: ## Running lint checker: ruff
 	@echo "(ruff) Linting development project..."
 	@ruff check src docs tests

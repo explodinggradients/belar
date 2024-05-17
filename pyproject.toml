@@ -18,6 +18,7 @@ dynamic = ["version", "readme"]
 [project.optional-dependencies]
 all = [
     "sentence-transformers",
+    "infinity_emb[all]",
 ]
 
 [tool.setuptools]

@@ -2,3 +2,4 @@ pytest
 pytest-xdist[psutil]
 pytest-asyncio
 llama_index
+pytest-asyncio
