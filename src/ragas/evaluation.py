@@ -18,7 +18,7 @@ from ragas.embeddings.base import (
 from ragas.exceptions import ExceptionInRunner
 from ragas.executor import Executor
 from ragas.llms import llm_factory
-from ragas.llms.base import BaseRagasLLM, LangchainLLMWrapper
+from ragas.llms.base import BaseRagasLLM, LangchainLLMWrapper, LLMConfig
 from ragas.metrics._answer_correctness import AnswerCorrectness
 from ragas.metrics.base import (
     Metric,
@@ -46,6 +46,7 @@ def evaluate(
     dataset: Dataset,
     metrics: list[Metric] | None = None,
     llm: t.Optional[BaseRagasLLM | LangchainLLM] = None,
+    llm_config: t.Optional[LLMConfig] = None,
     embeddings: t.Optional[BaseRagasEmbeddings | LangchainEmbeddings] = None,
     callbacks: Callbacks = None,
     in_ci: bool = False,
@@ -158,7 +159,7 @@ def evaluate(
 
     # set the llm and embeddings
     if isinstance(llm, LangchainLLM):
-        llm = LangchainLLMWrapper(llm, run_config=run_config)
+        llm = LangchainLLMWrapper(llm, llm_config=llm_config, run_config=run_config)
     if isinstance(embeddings, LangchainEmbeddings):
         embeddings = LangchainEmbeddingsWrapper(embeddings)
 

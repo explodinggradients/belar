@@ -12,6 +12,7 @@ from langchain_openai.embeddings import OpenAIEmbeddings
 from pydantic.dataclasses import dataclass
 
 from ragas.run_config import RunConfig, add_async_retry, add_retry
+import logging
 
 DEFAULT_MODEL_NAME = "BAAI/bge-small-en-v1.5"
 
@@ -20,16 +21,19 @@ class BaseRagasEmbeddings(Embeddings, ABC):
     run_config: RunConfig
 
     async def embed_text(self, text: str, is_async=True) -> List[float]:
+        logging.debug(f"Embedding single text: {text[0:6]}")
         embs = await self.embed_texts([text], is_async=is_async)
         return embs[0]
 
     async def embed_texts(
         self, texts: List[str], is_async: bool = True
     ) -> t.List[t.List[float]]:
+        logging.debug(f"Starting embedding for texts")
         if is_async:
             aembed_documents_with_retry = add_async_retry(
                 self.aembed_documents, self.run_config
             )
+            logging.debug(f"Async embedding result")
             return await aembed_documents_with_retry(texts)
         else:
             loop = asyncio.get_event_loop()
@@ -37,6 +41,7 @@ class BaseRagasEmbeddings(Embeddings, ABC):
                 self.embed_documents, self.run_config
             )
             return await loop.run_in_executor(None, embed_documents_with_retry, texts)
+            logging.debug(f"Sync embedding result")
 
     def set_run_config(self, run_config: RunConfig):
         self.run_config = run_config

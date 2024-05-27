@@ -16,7 +16,7 @@ from ragas._analytics import TestsetGenerationEvent, track
 from ragas.embeddings.base import BaseRagasEmbeddings, LangchainEmbeddingsWrapper
 from ragas.exceptions import ExceptionInRunner
 from ragas.executor import Executor
-from ragas.llms import BaseRagasLLM, LangchainLLMWrapper
+from ragas.llms import BaseRagasLLM, LangchainLLMWrapper, LLMConfig
 from ragas.run_config import RunConfig
 from ragas.testset.docstore import Document, DocumentStore, InMemoryDocumentStore
 from ragas.testset.evolutions import (
@@ -31,6 +31,7 @@ from ragas.testset.evolutions import (
 from ragas.testset.extractor import KeyphraseExtractor
 from ragas.testset.filters import EvolutionFilter, NodeFilter, QuestionFilter
 from ragas.utils import check_if_sum_is_close, deprecated, get_feature_language, is_nan
+
 
 if t.TYPE_CHECKING:
     from langchain_core.documents import Document as LCDocument
@@ -81,9 +82,11 @@ class TestsetGenerator:
         docstore: t.Optional[DocumentStore] = None,
         run_config: t.Optional[RunConfig] = None,
         chunk_size: int = 1024,
+        generator_llm_config: t.Optional[LLMConfig] = None,
+        critic_llm_config: t.Optional[LLMConfig] = None,
     ) -> "TestsetGenerator":
-        generator_llm_model = LangchainLLMWrapper(generator_llm)
-        critic_llm_model = LangchainLLMWrapper(critic_llm)
+        generator_llm_model = LangchainLLMWrapper(generator_llm, llm_config=generator_llm_config)
+        critic_llm_model = LangchainLLMWrapper(critic_llm, llm_config=critic_llm_config)
         embeddings_model = LangchainEmbeddingsWrapper(embeddings)
 
         keyphrase_extractor = KeyphraseExtractor(llm=generator_llm_model)

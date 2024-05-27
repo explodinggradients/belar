@@ -91,8 +91,9 @@ conditional_question_prompt = Prompt(
 
 compress_question_prompt = Prompt(
     name="compress_question",
-    instruction="""Rewrite the following question to make it more indirect and shorter while retaining the essence of the original question.
-    The goal is to create a question that conveys the same meaning but in a less direct manner. The rewritten question should shorter so use abbreviation wherever possible.""",
+    instruction="""Rewrite the following question.\n- make it more indirect and shorter\n- keep it clear, reasonable and easy to understand\n- retain full essence of the original question\n- the same answer should satisfy both old and new question.\n
+The goal is to create a question that conveys the same meaning but in a less direct manner. The rewritten question should be concise so use shorter forms and reasonable common abbreviations wherever possible.
+Respond with the question content only without any extra comments.""",
     examples=[
         {
             "question": "What is the distance between the Earth and the Moon?",
@@ -136,7 +137,13 @@ conversational_question_prompt = Prompt(
 
 question_answer_prompt = Prompt(
     name="answer_formulate",
-    instruction="""Answer the question using the information from the given context. Output verdict as '1' if answer is present '-1' if answer is not present in the context.""",
+    instruction="""Act as an expert in the domain of the given "INPUT" context. Using only the provided context, answer the question to the best of your ability. Assume the context should contain the necessary information to answer the question. To find the answer:
+
+1. Carefully read the entire context and identify the parts most relevant to answering the question.
+2. Break the question down into key components and look for related details in the context that address each component.
+3. Consider the overall themes and topics covered in the context to help interpret the question and fill in any gaps.
+4. Combine details from different parts of the context as needed to arrive at a complete answer, even if not explicitly stated. Make reasonable inferences based on the available information.
+5. A verdict of '1' can be given for a closely related, concise comprehensive answer that addresses enough of the key aspects of the question, even if no direct strightforward answer is possible due to some minority of the details are missing. Carefully weigh whether the answer is constructive and informative enough to justify a '1' verdict, or if it emphasizes too many unknowns, making a '-1' verdict more appropriate.""",
     examples=[
         {
             "context": """Climate change is significantly influenced by human activities, notably the emission of greenhouse gases from burning fossil fuels. The increased greenhouse gas concentration in the atmosphere traps more heat, leading to global warming and changes in weather patterns.""",
@@ -171,11 +178,12 @@ question_answer_prompt = Prompt(
 
 keyphrase_extraction_prompt = Prompt(
     name="keyphrase_extraction",
-    instruction="Extract the top 3 to 5 keyphrases from the provided text, focusing on the most significant and distinctive aspects. ",
+    instruction="Extract 3 to 5 unique, important keyphrases: \n- summarize the main topics of 'Your actual INPUT' text content.\n- Provide the output as a JSON object with a 'keyphrases' key \n- list minimum 3 and maximum 5 keyphrases.\n",
+#    instruction="Extract the concise and short non-empty 3 to 5 elements list of maximum 5 items - unique, distinct, not related, non repetitive, general - most important, general keyphrases summarising and characterizing main topics of the whole content of 'Your actual INPUT' and ensure to ignore and not refer to keyphrases from examples. Provide just single output response strictly in valid JSON format that follows examples structure.",
     examples=[
         {
             "text": "A black hole is a region of spacetime where gravity is so strong that nothing, including light and other electromagnetic waves, has enough energy to escape it. The theory of general relativity predicts that a sufficiently compact mass can deform spacetime to form a black hole.",
-            "output": {
+            "json_output": {
                 "keyphrases": [
                     "Black hole",
                     "Region of spacetime",
@@ -187,7 +195,7 @@ keyphrase_extraction_prompt = Prompt(
         },
         {
             "text": "The Great Wall of China is an ancient series of walls and fortifications located in northern China, built around 500 years ago. This immense wall stretches over 13,000 miles and is a testament to the skill and persistence of ancient Chinese engineers.",
-            "output": {
+            "json_output": {
                 "keyphrases": [
                     "Great Wall of China",
                     "Ancient fortifications",
@@ -195,16 +203,28 @@ keyphrase_extraction_prompt = Prompt(
                 ]
             },
         },
+        {
+            "text": "The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France. It is named after the engineer Gustave Eiffel, whose company designed and built the tower. Locally nicknamed 'La dame de fer', it was constructed from 1887 to 1889 as the centerpiece of the 1889 World's Fair and was initially criticized by some of France's leading artists and intellectuals for its design, but it has become a global cultural icon of France and one of the most recognizable structures in the world.",
+            "json_output": {
+                "keyphrases": [
+                    "Eiffel Tower",
+                    "Wrought-iron lattice tower",
+                    "Paris, France",
+                    "Gustave Eiffel",
+                    "Cultural icon of France",
+                ]
+            },
+        },
     ],
     input_keys=["text"],
-    output_key="output",
+    output_key="json_output",
     output_type="json",
 )
 
 
 seed_question_prompt = Prompt(
     name="seed_question",
-    instruction="Generate a question that can be fully answered from given context. The question should be formed using topic",
+    instruction="Generate a question that can be fully answered only by properly referring various details contained in the given context and so that all the details required to answer exist in the context. The question should be formed using specific topic and be possible to find all the properly related details in the context.",
     examples=[
         {
             "context": "Photosynthesis in plants involves converting light energy into chemical energy, using chlorophyll and other pigments to absorb light. This process is crucial for plant growth and the production of oxygen.",
@@ -258,27 +278,27 @@ main_topic_extraction_prompt = Prompt(
 
 find_relevant_context_prompt = Prompt(
     name="find_relevant_context",
-    instruction="Given a question and set of contexts, find the most relevant contexts to answer the question.",
+    instruction="Given a question and set of contexts, find the most relevant contexts from the set to answer the question. Provide at least one context id and ensure all are matching provided set.",
     examples=[
         {
             "question": "What is the capital of France?",
-            "contexts": [
-                "1. France is a country in Western Europe. It has several cities, including Paris, Lyon, and Marseille. Paris is not only known for its cultural landmarks like the Eiffel Tower and the Louvre Museum but also as the administrative center.",
-                "2. The capital of France is Paris. It is also the most populous city in France, with a population of over 2 million people. Paris is known for its cultural landmarks like the Eiffel Tower and the Louvre Museum.",
-                "3. Paris is the capital of France. It is also the most populous city in France, with a population of over 2 million people. Paris is known for its cultural landmarks like the Eiffel Tower and the Louvre Museum.",
-            ],
+            "contexts": {
+                "1": "France is a country in Western Europe. It has several cities, including Paris, Lyon, and Marseille. Paris is not only known for its cultural landmarks like the Eiffel Tower and the Louvre Museum but also as the administrative center.",
+                "2": "The capital of France is Paris. It is also the most populous city in France, with a population of over 2 million people. Paris is known for its cultural landmarks like the Eiffel Tower and the Louvre Museum.",
+                "3": "Paris is the capital of France. It is also the most populous city in France, with a population of over 2 million people. Paris is known for its cultural landmarks like the Eiffel Tower and the Louvre Museum.",
+            },
             "output": {
                 "relevant_contexts": [1, 2],
             },
         },
         {
             "question": "How does caffeine affect the body and what are its common sources?",
-            "contexts": [
-                "1. Caffeine is a central nervous system stimulant. It can temporarily ward off drowsiness and restore alertness. It primarily affects the brain, where it alters the function of neurotransmitters.",
-                "2. Regular physical activity is essential for maintaining good health. It can help control weight, combat health conditions, boost energy, and promote better sleep.",
-                "3. Common sources of caffeine include coffee, tea, cola, and energy drinks. These beverages are consumed worldwide and are known for providing a quick boost of energy.",
-            ],
-            "output": {"relevant_contexts": [1, 2]},
+            "contexts": {
+                "1": "Regular physical activity is essential for maintaining good health. It can help control weight, combat health conditions, boost energy, and promote better sleep.",
+                "2": "Common sources of caffeine include coffee, tea, cola, and energy drinks. These beverages are consumed worldwide and are known for providing a quick boost of energy.",
+                "3": "Caffeine is a central nervous system stimulant. It can temporarily ward off drowsiness and restore alertness. It primarily affects the brain, where it alters the function of neurotransmitters.",
+            },
+            "output": {"relevant_contexts": [2, 3]},
         },
     ],
     input_keys=["question", "contexts"],
@@ -290,7 +310,7 @@ find_relevant_context_prompt = Prompt(
 
 question_rewrite_prompt = Prompt(
     name="rewrite_question",
-    instruction="""Given a context, question and feedback, rewrite the question to improve its clarity and answerability based on the feedback provided.""",
+    instruction="""Given a context, question and feedback, reword the question preserving all the details and make it easier to understand, focus on improving its clarity and answerability based on the feedback provided. Make sure the new question is straightforward and easy to understand.""",
     examples=[
         {
             "context": "The Eiffel Tower was constructed using iron and was originally intended as a temporary exhibit for the 1889 World's Fair held in Paris. Despite its initial temporary purpose, the Eiffel Tower quickly became a symbol of Parisian ingenuity and an iconic landmark of the city, attracting millions of visitors each year. The tower's design, created by Gustave Eiffel, was initially met with criticism from some French artists and intellectuals, but it has since been celebrated as a masterpiece of structural engineering and architectural design.",
@@ -442,6 +462,7 @@ evolution_elimination_prompt = Prompt(
     instruction="""Check if the given two questions are equal based on following requirements:
     1. They have same constraints and requirements.
     2. They have same depth and breadth of the inquiry.
+    3. They are mostly equivalent and so a correct answer should satisfy both questions. 
     Output verdict as 1 if they are equal and 0 if they are not""",
     output_format_instruction=get_json_format_instructions(EvolutionElimination),
     examples=[

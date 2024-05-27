@@ -26,16 +26,20 @@ def runner_exception_hook(args: threading.ExceptHookArgs):
 
 
 def as_completed(loop, coros, max_workers):
-    loop_arg_dict = {"loop": loop} if sys.version_info[:2] < (3, 10) else {}
+    loop_arg_dict = {} # {"loop": loop} if sys.version_info[:2] < (3, 10) else {}
     if max_workers == -1:
         return asyncio.as_completed(coros, **loop_arg_dict)
 
     # loop argument is removed since Python 3.10
-    semaphore = asyncio.Semaphore(max_workers, **loop_arg_dict)
+    semaphore = asyncio.Semaphore(max_workers)
 
     async def sema_coro(coro):
         async with semaphore:
-            return await coro
+            try:
+                return await coro
+            except Exception as e:
+                logger.error(f"Error executing task: {e}")
+                raise  # Ensure exceptions are not swallowed silently
 
     sema_coros = [sema_coro(c) for c in coros]
     return asyncio.as_completed(sema_coros, **loop_arg_dict)

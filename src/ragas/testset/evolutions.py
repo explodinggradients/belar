@@ -186,9 +186,13 @@ class Evolution:
     ):
         assert self.generator_llm is not None, "generator_llm cannot be None"
 
-        node_content = [
-            f"{i+1}\t{n.page_content}" for i, n in enumerate(current_nodes.nodes)
-        ]
+        # clear index distinction helps in getting it more clear for LLM - especially for long, complex contexts
+        node_content = {
+            str(i + 1): n.page_content for i, n in enumerate(current_nodes.nodes)
+        }
+        # node_content = [
+        #     f"{i+1}\t{n.page_content}" for i, n in enumerate(current_nodes.nodes)
+        # ]
         results = await self.generator_llm.generate(
             prompt=self.find_relevant_context_prompt.format(
                 question=question, contexts=node_content
@@ -214,9 +218,9 @@ class Evolution:
             )
         else:
             selected_nodes = [
-                current_nodes.nodes[i - 1]
+                current_nodes.nodes[int(i) - 1]
                 for i in relevant_context_indices
-                if i - 1 < len(current_nodes.nodes)
+                if int(i) - 1 < len(current_nodes.nodes)
             ]
             relevant_context = (
                 CurrentNodes(root_node=selected_nodes[0], nodes=selected_nodes)
@@ -238,6 +242,9 @@ class Evolution:
         answer = (
             np.nan if answer.get("verdict") == "-1" else answer.get("answer", np.nan)
         )
+
+        if answer != answer:
+            logger.warning(f"answer is NaN for question: {question}")
 
         return DataRow(
             question=question.strip('"'),
