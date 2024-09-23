@@ -8,6 +8,7 @@ import numpy as np
 from pydantic import BaseModel, Field
 
 from ragas.experimental.llms.prompt import PydanticPrompt
+from ragas.experimental.metrics.component import BaseNLIComponent, LLMNLIComponent
 from ragas.metrics.base import (
     MetricType,
     MetricWithLLM,
@@ -166,6 +167,7 @@ class FaithfulnessExperimental(MetricWithLLM, SingleTurnMetric):
             MetricType.SINGLE_TURN: {"user_input", "response", "retrieved_contexts"}
         }
     )
+    nli_component: t.Optional[BaseNLIComponent] = None
     sentence_segmenter: t.Optional[HasSegmentMethod] = None
     max_retries: int = 1
     _reproducibility: int = 1
@@ -188,7 +190,7 @@ class FaithfulnessExperimental(MetricWithLLM, SingleTurnMetric):
 
     def __post_init__(self):
         self.long_form_answer_prompt = LongFormAnswerPrompt()
-        self.nli_statement_prompt = NLIStatementPrompt()
+        self.nli_component = LLMNLIComponent(llm=self.llm)  # type: ignore
         if self.sentence_segmenter is None:
             # TODO: make this dynamic, taking language from prompt
             language = "english"
@@ -196,13 +198,14 @@ class FaithfulnessExperimental(MetricWithLLM, SingleTurnMetric):
 
     async def _ascore(self, row: t.Dict, callbacks: Callbacks) -> float:
         assert self.llm is not None, "LLM is not set"
+        assert self.nli_component is not None, "NLI component is not set"
 
         answer, question, contexts = (
             row["response"],
             row["user_input"],
             row["retrieved_contexts"],
         )
-
+        contexts = "\n".join(contexts)
         # get the sentences from the answer
         if self.sentence_segmenter is None:
             raise ValueError("Sentence segmenter is not set")
@@ -226,19 +229,12 @@ class FaithfulnessExperimental(MetricWithLLM, SingleTurnMetric):
             for component in sentence_components.sentences
             for statement in component.simpler_statements
         ]
-        verdicts = await self.nli_statement_prompt.generate(
-            data=NLIStatementInput(
-                context="\n".join(contexts),
-                statements=statements,
-            ),
-            llm=self.llm,
-            callbacks=callbacks,
+        verdicts = await self.nli_component.apply(
+            hypothesis=statements, premise=contexts, callbacks=callbacks
         )
 
         # compute the score
-        num_faithful_statements = sum(
-            verdict.verdict for verdict in verdicts.statements
-        )
+        num_faithful_statements = sum(verdicts)
         if len(statements):
             score = num_faithful_statements / len(statements)
         else:
