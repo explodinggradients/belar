@@ -8,7 +8,7 @@ from enum import Enum
 from pydantic import BaseModel
 
 from ragas.callbacks import new_group
-from ragas.llms import BaseRagasLLM, llm_factory
+from ragas.llms import BaseRagasLLM
 from ragas.prompt import PromptMixin
 from ragas.testset.graph import KnowledgeGraph, Node
 
@@ -67,8 +67,8 @@ class BaseSynthesizer(ABC, t.Generic[Scenario], PromptMixin):
     Base class for synthesizing scenarios and samples.
     """
 
+    llm: BaseRagasLLM = field(kw_only=True)
     name: str = ""
-    llm: BaseRagasLLM = field(default_factory=llm_factory)
 
     def __post_init__(self):
         if not self.name:

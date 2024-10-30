@@ -8,6 +8,8 @@ import numpy as np
 from pydantic import BaseModel
 
 from ragas.dataset_schema import SingleTurnSample
+from ragas.embeddings import embedding_factory
+from ragas.llms import llm_factory
 from ragas.metrics.base import (
     MetricType,
     MetricWithEmbeddings,
@@ -148,6 +150,3 @@ class ResponseRelevancy(MetricWithLLM, MetricWithEmbeddings, SingleTurnMetric):
 class AnswerRelevancy(ResponseRelevancy):
     async def _ascore(self, row: t.Dict, callbacks: Callbacks) -> float:
         return await super()._ascore(row, callbacks)
-
-
-answer_relevancy = AnswerRelevancy()

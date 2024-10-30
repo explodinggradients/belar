@@ -188,7 +188,7 @@ class Extractor(BaseGraphTransformation):
 
 @dataclass
 class LLMBasedExtractor(Extractor, PromptMixin):
-    llm: BaseRagasLLM = field(default_factory=llm_factory)
+    llm: BaseRagasLLM = field(kw_only=True)
     merge_if_possible: bool = True
 
 

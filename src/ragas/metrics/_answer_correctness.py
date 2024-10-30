@@ -8,6 +8,8 @@ import numpy as np
 from pydantic import BaseModel
 
 from ragas.dataset_schema import SingleTurnSample
+from ragas.embeddings import embedding_factory
+from ragas.llms import llm_factory
 from ragas.metrics._answer_similarity import AnswerSimilarity
 from ragas.metrics._faithfulness import (
     FaithfulnessStatements,
@@ -173,7 +175,7 @@ class AnswerCorrectness(MetricWithLLM, MetricWithEmbeddings, SingleTurnMetric):
     sentence_segmenter: t.Optional[HasSegmentMethod] = None
     max_retries: int = 1
 
-    def __post_init__(self: t.Self):
+    def __post_init__(self):
         if len(self.weights) != 2:
             raise ValueError(
                 "Expects a list of two weights. First for factuality, second for semantic similarity"
@@ -231,7 +233,7 @@ class AnswerCorrectness(MetricWithLLM, MetricWithEmbeddings, SingleTurnMetric):
         return statements_simplified
 
     async def _single_turn_ascore(
-        self: t.Self, sample: SingleTurnSample, callbacks: Callbacks
+        self, sample: SingleTurnSample, callbacks: Callbacks
     ) -> float:
         row = sample.to_dict()
         score = await self._ascore(row, callbacks)
@@ -286,6 +288,3 @@ class AnswerCorrectness(MetricWithLLM, MetricWithEmbeddings, SingleTurnMetric):
         )
 
         return float(score)
-
-
-answer_correctness = AnswerCorrectness()

@@ -65,7 +65,9 @@ class Metric(ABC):
         a property and raises `ValueError` if columns are not in `VALID_COLUMNS`.
     """
 
-    _required_columns: t.Dict[MetricType, t.Set[str]] = field(default_factory=dict)
+    _required_columns: t.Dict[MetricType, t.Set[str]] = field(
+        default_factory=dict, repr=False, init=False
+    )
 
     @property
     @abstractmethod
@@ -174,25 +176,17 @@ class MetricWithLLM(Metric, PromptMixin):
         The language model used for the metric.
     """
 
-    llm: t.Optional[BaseRagasLLM] = None
+    llm: BaseRagasLLM = field(kw_only=True)
 
     def init(self, run_config: RunConfig):
-        if self.llm is None:
-            raise ValueError(
-                f"Metric '{self.name}' has no valid LLM provided (self.llm is None). Please initantiate a the metric with an LLM to run."  # noqa
-            )
         self.llm.set_run_config(run_config)
 
 
 @dataclass
 class MetricWithEmbeddings(Metric):
-    embeddings: t.Optional[BaseRagasEmbeddings] = None
+    embeddings: BaseRagasEmbeddings = field(kw_only=True)
 
     def init(self, run_config: RunConfig):
-        if self.embeddings is None:
-            raise ValueError(
-                f"Metric '{self.name}' has no valid embeddings provided (self.embeddings is None). Please initantiate a the metric with an embeddings to run."  # noqa
-            )
         self.embeddings.set_run_config(run_config)
 
 

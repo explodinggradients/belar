@@ -7,7 +7,9 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from ragas.dataset_schema import SingleTurnSample
+from ragas.embeddings import embedding_factory
 from ragas.embeddings.base import HuggingfaceEmbeddings
+from ragas.llms import llm_factory
 from ragas.metrics.base import (
     MetricType,
     MetricWithEmbeddings,
@@ -49,7 +51,7 @@ class SemanticSimilarity(MetricWithLLM, MetricWithEmbeddings, SingleTurnMetric):
     is_cross_encoder: bool = False
     threshold: t.Optional[float] = None
 
-    def __post_init__(self: t.Self):
+    def __post_init__(self):
         # only for cross encoder
         if isinstance(self.embeddings, HuggingfaceEmbeddings):
             self.is_cross_encoder = True if self.embeddings.is_cross_encoder else False
@@ -63,7 +65,7 @@ class SemanticSimilarity(MetricWithLLM, MetricWithEmbeddings, SingleTurnMetric):
         row = sample.to_dict()
         return await self._ascore(row, callbacks)
 
-    async def _ascore(self: t.Self, row: t.Dict, callbacks: Callbacks) -> float:
+    async def _ascore(self, row: t.Dict, callbacks: Callbacks) -> float:
         assert self.embeddings is not None, "embeddings must be set"
 
         ground_truth = t.cast(str, row["reference"])
@@ -94,8 +96,5 @@ class SemanticSimilarity(MetricWithLLM, MetricWithEmbeddings, SingleTurnMetric):
 class AnswerSimilarity(SemanticSimilarity):
     name: str = "answer_similarity"  # type: ignore
 
-    async def _ascore(self: t.Self, row: t.Dict, callbacks: Callbacks) -> float:
+    async def _ascore(self, row: t.Dict, callbacks: Callbacks) -> float:
         return await super()._ascore(row, callbacks)
-
-
-answer_similarity = AnswerSimilarity()
