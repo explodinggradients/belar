@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import nltk
 import typing as t
 import warnings
 from functools import lru_cache
@@ -10,15 +11,51 @@ from functools import lru_cache
 import numpy as np
 from datasets import Dataset
 from pysbd.languages import LANGUAGE_CODES
+from datasets import Dataset
+from deep_translator import GoogleTranslator
 
 if t.TYPE_CHECKING:
     from ragas.metrics.base import Metric
 
+
 DEBUG_ENV_VAR = "RAGAS_DEBUG"
-RAGAS_SUPPORTED_LANGUAGE_CODES = {
+
+nltk.download('punkt_tab')
+
+path = nltk.data.find('tokenizers/punkt_tab').path
+
+slovene = os.path.join(path, 'slovene')
+
+if os.path.exists(slovene):
+    os.rename(slovene, os.path.join(path, 'slovenian'))
+
+dirs =  os.listdir(path)
+supported_languages = [item for item in dirs if os.path.isdir(os.path.join(path, item))]
+
+supported_languages = [lang.split('.')[0] for lang in supported_languages]
+
+RAGAS_SUPPORTED_LANGUAGE_CODES_GOOGLE = GoogleTranslator().get_supported_languages(as_dict=True)
+
+RAGAS_SUPPORTED_LANGUAGE_CODES_NLTK = {
+    k.lower(): RAGAS_SUPPORTED_LANGUAGE_CODES_GOOGLE[k] for k in supported_languages
+}
+
+RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD = {
     v.__name__.lower(): k for k, v in LANGUAGE_CODES.items()
 }
 
+RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD['chinese (simplified)'] = RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD['chinese']
+RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD['myanmar'] = RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD['burmese']
+RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD['german'] = RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD['deutsch']
+
+del RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD['chinese']
+del RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD['burmese']
+del RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD['deutsch']
+
+RAGAS_SUPPORTED_LANGUAGE_CODES = {
+    **RAGAS_SUPPORTED_LANGUAGE_CODES_NLTK,
+    **{k: RAGAS_SUPPORTED_LANGUAGE_CODES_GOOGLE[k] for k, v in RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD.items() if k not in RAGAS_SUPPORTED_LANGUAGE_CODES_NLTK}
+}
 
 @lru_cache(maxsize=1)
 def get_cache_dir() -> str:

@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
+import nltk
+
 import typing as t
 from abc import ABC, abstractmethod
 from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
-
+from pysbd.cleaner import Cleaner
+from pysbd.utils import TextSpan
 from pysbd import Segmenter
 
 from ragas.callbacks import ChainType, new_group
@@ -15,7 +19,7 @@ from ragas.dataset_schema import MultiTurnSample, SingleTurnSample
 from ragas.executor import is_event_loop_running
 from ragas.prompt import PromptMixin
 from ragas.run_config import RunConfig
-from ragas.utils import RAGAS_SUPPORTED_LANGUAGE_CODES, deprecated
+from ragas.utils import RAGAS_SUPPORTED_LANGUAGE_CODES, RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD, deprecated
 
 if t.TYPE_CHECKING:
     from langchain_core.callbacks import Callbacks
@@ -454,16 +458,21 @@ def get_segmenter(
     """
     Get a sentence segmenter for a given language
     """
+    
     language = language.lower()
     if language not in RAGAS_SUPPORTED_LANGUAGE_CODES:
         raise ValueError(
             f"Language '{language}' not supported. Supported languages: {RAGAS_SUPPORTED_LANGUAGE_CODES.keys()}"
         )
-    return Segmenter(
-        language=RAGAS_SUPPORTED_LANGUAGE_CODES[language],
-        clean=clean,
-        char_span=char_span,
-    )
+    
+    if language in RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD:
+            return Segmenter(
+            language=RAGAS_SUPPORTED_LANGUAGE_CODES_PYSBD[language],
+            clean=clean,
+            char_span=char_span,
+        )
+    else:
+        return NLTKSegmenter(language=language, char_span=char_span)
 
 
 def is_reproducable(metric: Metric) -> bool:
@@ -474,3 +483,46 @@ def is_reproducable(metric: Metric) -> bool:
 
 
 ensembler = Ensember()
+
+
+class NLTKSegmenter:
+    def __init__(self, language: str = "english", char_span: bool = False, clean: bool = False):
+        self.language = language.lower()
+        self.char_span = char_span
+        self.clean = clean
+
+    def sentences_with_char_spans(self, sentences):
+        sent_spans = []
+        prior_end_char_idx = 0
+        for sent in sentences:
+            for match in re.finditer('{0}\s*'.format(re.escape(sent)), self.original_text):
+                match_str = match.group()
+                match_start_idx, match_end_idx = match.span()
+                if match_end_idx > prior_end_char_idx:
+                    sent_spans.append(
+                        TextSpan(match_str, match_start_idx, match_end_idx))
+                    prior_end_char_idx = match_end_idx
+                    break
+        return sent_spans
+    
+    def cleaner(self, text):
+        return Cleaner(text, self.language_module)
+        
+    def segment(self, text):
+        self.original_text = text
+        if not text:
+            return []
+
+        if self.clean:
+            text = self.cleaner(text).clean()
+
+        postprocessed_sents = nltk.tokenize.sent_tokenize(text, language=self.language)
+        sentence_w_char_spans = self.sentences_with_char_spans(postprocessed_sents)
+        if self.char_span:
+            return sentence_w_char_spans
+        elif self.clean:
+            # clean and destructed sentences
+            return postprocessed_sents
+        else:
+            # nondestructive with whitespaces
+            return [textspan.sent for textspan in sentence_w_char_spans]

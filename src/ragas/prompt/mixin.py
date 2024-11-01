@@ -53,7 +53,8 @@ class PromptMixin:
             setattr(self, key, value)
 
     async def adapt_prompts(
-        self, language: str, llm: BaseRagasLLM, adapt_instruction: bool = False
+        self, language: str, llm: BaseRagasLLM, adapt_instruction: bool = False,
+        google_translate: bool = False
     ) -> t.Dict[str, PydanticPrompt]:
         """
         Adapts the prompts in the class to the given language and using the given LLM.
@@ -67,7 +68,7 @@ class PromptMixin:
         prompts = self.get_prompts()
         adapted_prompts = {}
         for name, prompt in prompts.items():
-            adapted_prompt = await prompt.adapt(language, llm, adapt_instruction)
+            adapted_prompt = await prompt.adapt(language, llm, adapt_instruction, google_translate)
             adapted_prompts[name] = adapted_prompt
 
         return adapted_prompts
