@@ -1,14 +1,19 @@
 from datasets import load_dataset
 
-from ragas import evaluate
-from ragas.metrics import answer_relevancy, context_precision, faithfulness
-from ragas.metrics.critique import harmfulness
+from ragas import EvaluationDataset, evaluate
+from ragas.llms import llm_factory
+from ragas.metrics import AnswerRelevancy, ContextPrecision, Faithfulness
 
 
 def test_evaluate_e2e():
-    ds = load_dataset("explodinggradients/fiqa", "ragas_eval")["baseline"]
+    dataset = load_dataset("explodinggradients/amnesty_qa", "english_v3")
+    eval_dataset = EvaluationDataset.from_hf_dataset(dataset["eval"])  # type: ignore
     result = evaluate(
-        ds.select(range(3)),
-        metrics=[answer_relevancy, context_precision, faithfulness, harmfulness],
+        eval_dataset,
+        metrics=[
+            AnswerRelevancy(llm=llm_factory()),
+            ContextPrecision(llm=llm_factory()),
+            Faithfulness(llm=llm_factory()),
+        ],
     )
     assert result is not None
