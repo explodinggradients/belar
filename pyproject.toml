@@ -41,6 +41,7 @@ docs = [
     "mkdocs-section-index",
     "mkdocs-git-committers-plugin-2",
     "mkdocs-git-revision-date-localized-plugin",
+    "mike",
 ]
 dev = [
     "rich",
