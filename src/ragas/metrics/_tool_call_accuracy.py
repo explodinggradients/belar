@@ -55,6 +55,8 @@ class ToolCallAccuracy(MultiTurnMetric):
     def is_sequence_aligned(
         self, pred_sequence: t.List[str], ref_sequence: t.List[str]
     ) -> bool:
+        if len(pred_sequence) != len(ref_sequence):
+            return False
         ref_index = 0  # Index to track position in reference sequence
         for pred in pred_sequence:
             if ref_index < len(ref_sequence) and pred == ref_sequence[ref_index]:
