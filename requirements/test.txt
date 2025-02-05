@@ -4,3 +4,5 @@ pytest-asyncio
 llama_index
 nbmake
 diskcache
+haystack-ai
+haystack-experimental==0.4.0

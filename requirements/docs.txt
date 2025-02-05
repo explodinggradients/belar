@@ -5,3 +5,5 @@ sphinx_design
 astroid<3
 myst-nb
 llama_index
+haystack-ai
+haystack-experimental==0.4.0

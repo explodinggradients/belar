@@ -27,6 +27,8 @@ all = [
     "pandas",
     "datacompy",
     "llama_index",
+    "haystack-ai",
+    "haystack-experimental==0.4.0"
 ]
 docs = [
     "mkdocs>=1.6.1",
@@ -59,6 +61,9 @@ dev = [
     "rapidfuzz",
     "pandas",
     "datacompy",
+    "haystack-ai",
+    "haystack-experimental==0.4.0",
+    "sacrebleu",
 ]
 test = [
     "pytest",

@@ -16,3 +16,5 @@ nltk
 rapidfuzz
 pandas
 datacompy
+haystack-ai
+haystack-experimental==0.4.0
